@@ -78,13 +78,22 @@ public class IngredientController {
             @RequestParam Instant from,
             @RequestParam Instant to
     ) {
-
-        Ingredient ingredient = ingredientService.findIngredientById(id);
-
-        if (ingredient == null) {
-            return ResponseEntity.status(404)
+        try {
+            ParamValidator.validateDateRange(from, to);
+        } catch (BadRequestException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+        try {
+            ParamValidator.validateIdParam(id);
+        }catch (BadRequestException e) {
+            return ResponseEntity
+                    .status(404)
                     .body("Ingredient.id=" + id + " is not found");
         }
+
+        Ingredient ingredient = ingredientService.findIngredientById(id);
 
         List<StockMovement> movements =
                 stockMovementService.getStockMovements(id, from, to);
@@ -97,11 +106,15 @@ public class IngredientController {
             @PathVariable Integer id,
             @RequestBody List<StockMovement> movementsToCreate
     ) {
-        Ingredient ingredient = ingredientService.findIngredientById(id);
-        if (ingredient == null) {
-            return ResponseEntity.status(404)
+        try {
+            ParamValidator.validateIdParam(id);
+        }catch (BadRequestException e) {
+            return ResponseEntity
+                    .status(404)
                     .body("Ingredient.id=" + id + " is not found");
         }
+
+        Ingredient ingredient = ingredientService.findIngredientById(id);
 
         List<StockMovement> createdMovements = stockMovementService.createStockMovements(id, movementsToCreate);
 

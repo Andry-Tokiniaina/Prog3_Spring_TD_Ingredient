@@ -3,6 +3,8 @@ package com.example.restservice.validator;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+
 @Component
 public class ParamValidator {
     public void paramValidator (String at, String unit) throws BadRequestException {
@@ -23,6 +25,22 @@ public class ParamValidator {
             else {
                 throw new BadRequestException(msg.toString());
             }
+        }
+    }
+    public static void validateDateRange(Instant from, Instant to) throws BadRequestException {
+        if (from == null || to == null) {
+            throw new BadRequestException("Either mandatory query parameter `from` or `to` is not provided.");
+        }
+        if (from.isAfter(to)) {
+            throw new BadRequestException("Parameter `from` must be before `to`.");
+        }
+    }
+    public static void validateIdParam(Integer id) throws BadRequestException {
+        if (id == null){
+            throw new BadRequestException("Parameter `id` is required.");
+        }
+        if (id <= 0) {
+            throw new BadRequestException("Parameter `id` must be greater than 0.");
         }
     }
 }
