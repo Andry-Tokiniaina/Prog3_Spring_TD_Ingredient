@@ -4,9 +4,11 @@ import org.postgresql.util.PSQLException;
 
 import com.example.restservice.DataSource;
 import com.example.restservice.entities.Order;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class OrderRepository {
     DbUtils dbUtils = new DbUtils();
     Order findOrderByReference(String reference) {

@@ -3,36 +3,17 @@ package com.example.restservice.repositories;
 import com.example.restservice.DataSource;
 import com.example.restservice.entities.Ingredient;
 import com.example.restservice.entities.enums.CategoryEnum;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class IngredientRepository {
     DbUtils dbutil = new DbUtils();
 
-    List<Ingredient> findAllIngredients() throws SQLException {
-        List<Ingredient> ingredients = new ArrayList<>();
-        DataSource ds = new DataSource();
-        try (Connection connection = ds.getConnection()){
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, name, category, price FROM Ingredient");
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Ingredient ingredient = new Ingredient();
-                ingredient.setId(resultSet.getInt("id"));
-                ingredient.setName(resultSet.getString("name"));
-                ingredient.setCategory(CategoryEnum.valueOf(resultSet.getString("category")));
-                ingredient.setPrice(resultSet.getDouble("price"));
-                ingredients.add(ingredient);
-            }
-            return  ingredients;
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    Ingredient findIngredientById(Integer id) {
+    public Ingredient findIngredientById(Integer id) {
         Ingredient ingredient = new Ingredient();
         DataSource dbConnection = new DataSource();
         try (Connection connection = dbConnection.getConnection()) {
@@ -137,6 +118,62 @@ public class IngredientRepository {
             throw new RuntimeException(e);
         } finally {
             dataSource.closeConnection(conn);
+        }
+    }
+
+    public List<Ingredient> findIngredients() {
+        DataSource dataSource = new DataSource();
+        List<Ingredient> savedIngredients = new ArrayList<>();
+        String query = "select id, name, price, category from ingredient order by id";
+
+        try (Connection conn = dataSource.getConnection()){
+            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(resultSet.getInt("id"));
+                ingredient.setName(resultSet.getString("name"));
+                ingredient.setCategory(CategoryEnum.valueOf(resultSet.getString("category")));
+                ingredient.setPrice(resultSet.getDouble("price"));
+                savedIngredients.add(ingredient);
+            }
+            return savedIngredients;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Ingredient> findIngredientsByDishId(Integer dishId) {
+        List<Ingredient> ingredients = new ArrayList<>();
+        DataSource ds = new DataSource();
+
+        try (Connection connection = ds.getConnection()) {
+            PreparedStatement ps = connection.prepareStatement("""
+            SELECT i.id, i.name, i.category, i.price
+            FROM ingredient i
+            JOIN dish_ingredient di ON i.id = di.ingredient_id
+            WHERE di.dish_id = ?
+        """);
+
+            ps.setInt(1, dishId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(rs.getInt("id"));
+                ingredient.setName(rs.getString("name"));
+                ingredient.setCategory(
+                        CategoryEnum.valueOf(rs.getString("category"))
+                );
+                ingredient.setPrice(rs.getDouble("price"));
+
+                ingredients.add(ingredient);
+            }
+
+            return ingredients;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 }

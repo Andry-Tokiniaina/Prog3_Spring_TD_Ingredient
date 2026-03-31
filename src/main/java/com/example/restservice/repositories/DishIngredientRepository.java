@@ -5,6 +5,7 @@ import com.example.restservice.entities.DishIngredient;
 import com.example.restservice.entities.Ingredient;
 import com.example.restservice.entities.enums.CategoryEnum;
 import com.example.restservice.entities.enums.Unit;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,8 +14,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class DishIngredientRepository {
-    private List<DishIngredient> findIngredientByDishId(Integer idDish) throws SQLException {
+    public List<DishIngredient> findIngredientByDishId(Integer idDish) throws SQLException {
         DataSource dataSource = new DataSource();
         Connection connection = dataSource.getConnection();
         List<DishIngredient> dishIngredients = new ArrayList<>();

@@ -1,15 +1,39 @@
 package com.example.restservice.repositories;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.example.restservice.DataSource;
 import com.example.restservice.entities.Dish;
 import com.example.restservice.entities.enums.DishTypeEnum;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DishRepository {
     DbUtils dbUtils = new DbUtils();
 
-    Dish findDishById(Integer id) throws SQLException {
+    public List<Dish> findDish(){
+        DataSource dataSource = new DataSource();
+        List<Dish> dishList = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection()){
+            PreparedStatement preparedStatement = conn.prepareStatement("SELECT id, name, category, price FROM Dish");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                Dish dish = new Dish();
+                dish.setId(resultSet.getInt("id"));
+                dish.setName(resultSet.getString("name"));
+                dish.setDishType(DishTypeEnum.valueOf(resultSet.getString("category")));
+                dish.setPrice(resultSet.getDouble("price"));
+                dishList.add(dish);
+            }
+            return dishList;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Dish findDishById(Integer id) throws SQLException {
         DataSource ds = new DataSource();
         Connection connection = ds.getConnection();
         try {
@@ -37,7 +61,7 @@ public class DishRepository {
         }
     }
 
-    Dish saveDish(Dish toSave) {
+    public Dish saveDish(Dish toSave) {
         String upsertDishSql = """
                     INSERT INTO dish (id, selling_price, name, dish_type)
                     VALUES (?, ?, ?, ?::dish_type)
