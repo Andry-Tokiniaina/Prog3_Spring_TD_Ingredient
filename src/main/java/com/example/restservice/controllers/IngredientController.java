@@ -1,10 +1,11 @@
 package com.example.restservice.controllers;
 
 import com.example.restservice.entities.Ingredient;
+import com.example.restservice.entities.StockMovement;
 import com.example.restservice.entities.StockValue;
 import com.example.restservice.entities.enums.Unit;
-import com.example.restservice.repositories.IngredientRepository;
 import com.example.restservice.services.IngredientService;
+import com.example.restservice.services.StockMovementService;
 import com.example.restservice.validator.ParamValidator;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,11 @@ public class IngredientController {
 
     private ParamValidator paramValidator;
     private final IngredientService ingredientService;
+    private final StockMovementService  stockMovementService;
 
-    public IngredientController(IngredientService ingredientService) {
+    public IngredientController(IngredientService ingredientService, StockMovementService stockMovementService) {
         this.ingredientService = ingredientService;
+        this.stockMovementService = stockMovementService;
     }
 
     @GetMapping
@@ -43,7 +46,7 @@ public class IngredientController {
         return ResponseEntity.ok(ingredient);
     }
 
-    @GetMapping("/ingredients/{id}/stock")
+    @GetMapping("/{id}/stock")
     public ResponseEntity<?> getIngredientStock(
             @PathVariable int id,
             @RequestParam(required = false) String at,
@@ -67,5 +70,41 @@ public class IngredientController {
                     .header("Content-Type", "text/plain")
                     .body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/stockMovements")
+    public ResponseEntity<?> getStockMovements(
+            @PathVariable Integer id,
+            @RequestParam Instant from,
+            @RequestParam Instant to
+    ) {
+
+        Ingredient ingredient = ingredientService.findIngredientById(id);
+
+        if (ingredient == null) {
+            return ResponseEntity.status(404)
+                    .body("Ingredient.id=" + id + " is not found");
+        }
+
+        List<StockMovement> movements =
+                stockMovementService.getStockMovements(id, from, to);
+
+        return ResponseEntity.ok(movements);
+    }
+
+    @PostMapping("/{id}/stockMovements")
+    public ResponseEntity<?> addStockMovements(
+            @PathVariable Integer id,
+            @RequestBody List<StockMovement> movementsToCreate
+    ) {
+        Ingredient ingredient = ingredientService.findIngredientById(id);
+        if (ingredient == null) {
+            return ResponseEntity.status(404)
+                    .body("Ingredient.id=" + id + " is not found");
+        }
+
+        List<StockMovement> createdMovements = stockMovementService.createStockMovements(id, movementsToCreate);
+
+        return ResponseEntity.status(201).body(createdMovements);
     }
 }

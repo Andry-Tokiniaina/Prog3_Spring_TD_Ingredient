@@ -3,10 +3,13 @@ package com.example.restservice.repositories;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.example.restservice.DataSource;
 import com.example.restservice.entities.Dish;
 import com.example.restservice.entities.enums.DishTypeEnum;
+import com.example.restservice.entities.DishIngredient;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -96,6 +99,47 @@ public class DishRepository {
             conn.commit();
             return findDishById(dishId);
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void detachIngredients (int dishId) {
+        DataSource dataSource = new DataSource();
+        String deleteSql = "DELETE FROM dish_ingredient WHERE id_dish = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(deleteSql)) {
+            stmt.setInt(1, dishId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void attachIngredients (int dishId, List<Integer> ingIds) {
+        DataSource dataSource = new DataSource();
+        String insertSql = """
+           insert into dish_ingredient (id_ingredient,id_dish, required_quantity, unit)
+           values (?, ?, 1, 'KG')
+        """;
+
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement stmt = connection.prepareStatement(insertSql)) {
+                for (Integer ingId : ingIds) {
+                    stmt.setInt(1, ingId);
+                    stmt.setInt(2, dishId);
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+                connection.commit();
+            }
+            catch (SQLException e) {
+                connection.rollback();
+                throw new RuntimeException(e);
+            }
+        }
+        catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }

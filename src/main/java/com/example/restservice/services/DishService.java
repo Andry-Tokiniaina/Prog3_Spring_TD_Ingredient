@@ -54,4 +54,12 @@ public class DishService {
 
         return dishes;
     }
+
+    public Dish updateIngredient(int id, List<Integer> ingIds) throws SQLException {
+        findDishById(id);
+        dishRepository.detachIngredients(id);
+        dishRepository.attachIngredients(id, ingIds);
+
+        return this.findDishById(id);
+    }
 }
