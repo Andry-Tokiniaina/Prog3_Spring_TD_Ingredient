@@ -93,8 +93,6 @@ public class IngredientController {
                     .body("Ingredient.id=" + id + " is not found");
         }
 
-        Ingredient ingredient = ingredientService.findIngredientById(id);
-
         List<StockMovement> movements =
                 stockMovementService.getStockMovements(id, from, to);
 
@@ -113,8 +111,6 @@ public class IngredientController {
                     .status(404)
                     .body("Ingredient.id=" + id + " is not found");
         }
-
-        Ingredient ingredient = ingredientService.findIngredientById(id);
 
         List<StockMovement> createdMovements = stockMovementService.createStockMovements(id, movementsToCreate);
 
